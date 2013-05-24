@@ -2710,11 +2710,12 @@ bool LoadBlockIndex()
 {
     if (fTestNet)
     {
-        pchMessageStart[0] = 0x0b;
-        pchMessageStart[1] = 0x11;
-        pchMessageStart[2] = 0x09;
-        pchMessageStart[3] = 0x07;
-        hashGenesisBlock = uint256("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943");
+        pchMessageStart[0] = 0xfa;
+        pchMessageStart[1] = 0xbf;
+        pchMessageStart[2] = 0xb5;
+        pchMessageStart[3] = 0xfe;
+        bnProofOfWorkLimit = CBigNum(~uint256(0) >> 28);
+        hashGenesisBlock = uint256("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008");
     }
 
     //
@@ -2747,34 +2748,47 @@ bool InitBlockIndex() {
         //   vMerkleTree: 4a5e1e
 
         // Genesis block
-        const char* pszTimestamp = "... choose what comes next.  Lives of your own, or a return to chains. -- V";
+        CBlock block;
         CTransaction txNew;
         txNew.vin.resize(1);
         txNew.vout.resize(1);
-        txNew.vin[0].scriptSig = CScript() << 469794815 << CBigNum(522) << vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
         txNew.vout[0].nValue = 50 * COIN;
-        txNew.vout[0].scriptPubKey = CScript() << ParseHex("04b620369050cd899ffbbc4e8ee51e8c4534a855bb463439d63d235d4779685d8b6f4870a238cf365ac94fa13ef9a2a22cd99d0d5ee86dcabcafce36c7acf43ce5") << OP_CHECKSIG;
-        CBlock block;
+
+        if (!fTestNet)
+        {
+            const char* pszTimestamp = "... choose what comes next.  Lives of your own, or a return to chains. -- V";
+            block.nTime    = 1303000001;
+            block.nBits    = 0x1c007fff;
+            block.nNonce   = 0xa21ea192U;
+
+            txNew.vin[0].scriptSig = CScript() << block.nBits << CBigNum(522) << vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
+            txNew.vout[0].scriptPubKey = CScript() << ParseHex("04b620369050cd899ffbbc4e8ee51e8c4534a855bb463439d63d235d4779685d8b6f4870a238cf365ac94fa13ef9a2a22cd99d0d5ee86dcabcafce36c7acf43ce5") << OP_CHECKSIG;
+        } else {
+            const char* pszTimestamp = "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks";
+            block.nTime    = 1296688602;
+            block.nBits    = 0x1d07fff8;
+            block.nNonce   = 384568319;
+
+            txNew.vin[0].scriptSig = CScript() << 486604799 << CBigNum(4) << vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
+            txNew.vout[0].scriptPubKey = CScript() << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f") << OP_CHECKSIG;
+        }
         block.vtx.push_back(txNew);
         block.hashPrevBlock = 0;
         block.hashMerkleRoot = block.BuildMerkleTree();
         block.nVersion = 1;
-        block.nTime    = 1303000001;
-        block.nBits    = 0x1c007fff;
-        block.nNonce   = 0xa21ea192U;
 
-        if (fTestNet)
-        {
-            block.nTime    = 1296688602;
-            block.nNonce   = 414098458;
-        }
 
         //// debug print
         uint256 hash = block.GetHash();
         printf("%s\n", hash.ToString().c_str());
         printf("%s\n", hashGenesisBlock.ToString().c_str());
         printf("%s\n", block.hashMerkleRoot.ToString().c_str());
-        assert(block.hashMerkleRoot == uint256("0x41c62dbd9068c89a449525e3cd5ac61b20ece28c3c38b3f35b2161f0e6d3cb0d"));
+        if (!fTestNet)
+        {
+            assert(block.hashMerkleRoot == uint256("0x41c62dbd9068c89a449525e3cd5ac61b20ece28c3c38b3f35b2161f0e6d3cb0d"));
+        } else {
+            assert(block.hashMerkleRoot == uint256("0x4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"));
+        }
         block.print();
         assert(hash == hashGenesisBlock);
 
