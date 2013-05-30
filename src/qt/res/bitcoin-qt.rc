@@ -23,10 +23,10 @@ BEGIN
             VALUE "CompanyName",        "Namecoin"
             VALUE "FileDescription",    "Namecoin-Qt (OSS GUI client for Namecoin)"
             VALUE "FileVersion",        VER_FILEVERSION_STR
-            VALUE "InternalName",       "bitcoin-qt"
+            VALUE "InternalName",       "namecoin-qt"
             VALUE "LegalCopyright",     COPYRIGHT_STR
             VALUE "LegalTrademarks1",   "Distributed under the MIT/X11 software license, see the accompanying file COPYING or http://www.opensource.org/licenses/mit-license.php."
-            VALUE "OriginalFilename",   "bitcoin-qt.exe"
+            VALUE "OriginalFilename",   "namecoin-qt.exe"
             VALUE "ProductName",        "Namecoin-Qt"
             VALUE "ProductVersion",     VER_PRODUCTVERSION_STR
         END
