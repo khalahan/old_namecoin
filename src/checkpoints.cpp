@@ -36,19 +36,19 @@ namespace Checkpoints
     static MapCheckpoints mapCheckpoints =
         boost::assign::map_list_of
         ( 11111, uint256("0x000000000001dea5779d3df5960afe9f5a40c0c38b1ff6a0b896deaa9712ee50"))
-		/* Namecoin checkpoints
+        /* Namecoin checkpoints
         ( 33333, uint256("0xeb01e9beca9e791cdc8cef5669308080e7692fc1f884a44c6ca982b1abb350d6"))
         ( 74000, uint256("0x4c5c8c3acbedac395616096d679e31b4c4c93725f91de1c9d9fd2f00c72df2ed"))
         (105000, uint256("0x09bc8d10f7d8f808b8cf98bd87d6b0333213cd7a812024623d240f0dd15afac2"))
-		*/
-		/* Bitcoin checkpoints
+        */
+        /* Bitcoin checkpoints
         (134444, uint256("0x00000000000005b12ffd4cd315cd34ffd4a594f430ac814c91184a0d42d2b0fe"))
         (168000, uint256("0x000000000000099e61ea72015e79632f216fe6cb33d7899acb35b75c8303b763"))
         (193000, uint256("0x000000000000059f452a5f7340de6682a977387c17010ff6e6c3bd83ca8b1317"))
         (210000, uint256("0x000000000000048b95347e83192f69cf0366076336c639f9b7228e9ba171342e"))
         (216116, uint256("0x00000000000001b4f4b433e81ee46494af945cf96014816a4e2370f11b23df4e"))
         (225430, uint256("0x00000000000001c108384350f74090433e7fcf79a606b8e797f065b130575932"))
-		*/
+        */
         ;
     static const CCheckpointData data = {
         &mapCheckpoints,
