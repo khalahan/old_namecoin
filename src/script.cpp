@@ -579,6 +579,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
                     case OP_ABS:        if (bn < bnZero) bn = -bn; break;
                     case OP_NOT:        bn = (bn == bnZero); break;
                     case OP_0NOTEQUAL:  bn = (bn != bnZero); break;
+                    default:            assert(!"invalid opcode"); break;
                     }
                     popstack(stack);
                     stack.push_back(bn.getvch());
@@ -658,6 +659,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
                     case OP_GREATERTHANOREQUAL:  bn = (bn1 >= bn2); break;
                     case OP_MIN:                 bn = (bn1 < bn2 ? bn1 : bn2); break;
                     case OP_MAX:                 bn = (bn1 > bn2 ? bn1 : bn2); break;
+                    default:                     assert(!"invalid opcode"); break;
                     }
                     popstack(stack);
                     popstack(stack);
