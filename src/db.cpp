@@ -672,7 +672,7 @@ void CWalletDB::ListAccountCreditDebit(const string& strAccount, list<CAccountin
 }
 
 
-bool CWalletDB::LoadWallet(CWallet* pwallet)
+int CWalletDB::LoadWallet(CWallet* pwallet)
 {
     pwallet->vchDefaultKey.clear();
     int nFileVersion = 0;
@@ -692,7 +692,7 @@ bool CWalletDB::LoadWallet(CWallet* pwallet)
         // Get cursor
         Dbc* pcursor = GetCursor();
         if (!pcursor)
-            return false;
+            return DB_CORRUPT;
 
         loop
         {
@@ -703,7 +703,7 @@ bool CWalletDB::LoadWallet(CWallet* pwallet)
             if (ret == DB_NOTFOUND)
                 break;
             else if (ret != 0)
-                return false;
+                return DB_CORRUPT;
 
             // Unserialize
             // Taking advantage of the fact that pair serialization
@@ -840,6 +840,13 @@ bool CWalletDB::LoadWallet(CWallet* pwallet)
                 if (strKey == "addrProxy")          ssValue >> addrProxy;
                 if (fHaveUPnP && strKey == "fUseUPnP")           ssValue >> fUseUPnP;
             }
+            else if (strType == "minversion")
+            {
+                int nMinVersion = 0;
+                ssValue >> nMinVersion;
+                if (nMinVersion > VERSION)
+                    return DB_TOO_NEW;
+            }
         }
         pcursor->close();
     }
@@ -870,7 +877,7 @@ bool CWalletDB::LoadWallet(CWallet* pwallet)
     }
 
 
-    return true;
+    return DB_LOAD_OK;
 }
 
 void ThreadFlushWalletDB(void* parg)
