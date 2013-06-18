@@ -39,6 +39,9 @@ typedef Value(*rpcfn_type)(const Array& params, bool fHelp);
 extern map<string, rpcfn_type> mapCallTable;
 Value sendtoaddress(const Array& params, bool fHelp);
 
+static int64 nWalletUnlockTime;
+static CCriticalSection cs_nWalletUnlockTime;
+
 
 Object JSONRPCError(int code, const string& message)
 {
@@ -457,6 +460,8 @@ Value getinfo(const Array& params, bool fHelp)
     obj.push_back(Pair("keypoolsize",   pwalletMain->GetKeyPoolSize()));
     obj.push_back(Pair("paytxfee",      ValueFromAmount(nTransactionFee)));
     obj.push_back(Pair("mininput",      ValueFromAmount(nMinimumInputValue)));
+    if (pwalletMain->IsCrypted())
+        obj.push_back(Pair("unlocked_until", (boost::int64_t)nWalletUnlockTime));
     obj.push_back(Pair("errors",        GetWarnings("statusbar")));
     return obj;
 }
@@ -1522,31 +1527,29 @@ void ThreadTopUpKeyPool(void* parg)
 
 void ThreadCleanWalletPassphrase(void* parg)
 {
-    static int64 nWakeTime;
     int64 nMyWakeTime = GetTime() + *((int*)parg);
-    static CCriticalSection cs_nWakeTime;
 
-    if (nWakeTime == 0)
+    if (nWalletUnlockTime == 0)
     {
-        CRITICAL_BLOCK(cs_nWakeTime)
+        CRITICAL_BLOCK(cs_nWalletUnlockTime)
         {
-            nWakeTime = nMyWakeTime;
+            nWalletUnlockTime = nMyWakeTime;
         }
 
-        while (GetTime() < nWakeTime)
-            Sleep(GetTime() - nWakeTime);
+        while (GetTime() < nWalletUnlockTime)
+            Sleep(GetTime() - nWalletUnlockTime);
 
-        CRITICAL_BLOCK(cs_nWakeTime)
+        CRITICAL_BLOCK(cs_nWalletUnlockTime)
         {
-            nWakeTime = 0;
+            nWalletUnlockTime = 0;
         }
     }
     else
     {
-        CRITICAL_BLOCK(cs_nWakeTime)
+        CRITICAL_BLOCK(cs_nWalletUnlockTime)
         {
-            if (nWakeTime < nMyWakeTime)
-                nWakeTime = nMyWakeTime;
+            if (nWalletUnlockTime < nMyWakeTime)
+                nWalletUnlockTime = nMyWakeTime;
         }
         free(parg);
         return;
