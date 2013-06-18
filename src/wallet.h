@@ -183,6 +183,7 @@ public:
 
     bool GetTransaction(const uint256 &hashTx, CWalletTx& wtx);
 
+    bool SetDefaultKey(const std::vector<unsigned char> &vchPubKey);
 };
 
 
