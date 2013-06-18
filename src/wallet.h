@@ -21,6 +21,8 @@ public:
     // visible for NAMECOIN
     bool SelectCoins(int64 nTargetValue, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet) const;
 
+    CWalletDB *pwalletdbEncryption;
+    CCriticalSection cs_pwalletdbEncryption;
 
 public:
     bool fFileBacked;
@@ -37,12 +39,14 @@ public:
     {
         fFileBacked = false;
         nMasterKeyMaxID = 0;
+        pwalletdbEncryption = NULL;
     }
     CWallet(std::string strWalletFileIn)
     {
         strWalletFile = strWalletFileIn;
         fFileBacked = true;
         nMasterKeyMaxID = 0;
+        pwalletdbEncryption = NULL;
     }
 
     mutable CCriticalSection cs_mapWallet;
