@@ -11,6 +11,7 @@
 #include "script.h"
 
 #include <list>
+#include <boost/shared_ptr.hpp>
 
 class CWallet;
 class CBlock;
@@ -21,6 +22,9 @@ class CReserveKey;
 class CAddress;
 class CInv;
 class CNode;
+
+class CHooks;
+class CAuxPow;
 
 struct CBlockIndexWorkComparator;
 
@@ -59,6 +63,7 @@ static const int fHaveUPnP = true;
 static const int fHaveUPnP = false;
 #endif
 
+extern CHooks* hooks;
 
 extern CScript COINBASE_FLAGS;
 
@@ -154,6 +159,7 @@ void GenerateBitcoins(bool fGenerate, CWallet* pwallet);
 CBlockTemplate* CreateNewBlock(CReserveKey& reservekey);
 /** Modify the extranonce in a block */
 void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& nExtraNonce);
+void IncrementExtraNonceWithAux(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& nExtraNonce, int64& nPrevTime, std::vector<unsigned char>& vchAux);
 /** Do mining precalculation */
 void FormatHashBuffers(CBlock* pblock, char* pmidstate, char* pdata, char* phash1);
 /** Check mined block */
@@ -1248,6 +1254,30 @@ public:
 };
 
 
+
+template <typename Stream>
+int ReadWriteAuxPow(Stream& s, const boost::shared_ptr<CAuxPow>& auxpow, int nType, int nVersion, CSerActionSerialize ser_action);
+
+template <typename Stream>
+int ReadWriteAuxPow(Stream& s, boost::shared_ptr<CAuxPow>& auxpow, int nType, int nVersion, CSerActionUnserialize ser_action);
+
+template <typename Stream>
+int ReadWriteAuxPow(Stream& s, const boost::shared_ptr<CAuxPow>& auxpow, int nType, int nVersion, CSerActionGetSerializeSize ser_action);
+
+enum
+{   
+    // primary version
+    BLOCK_VERSION_DEFAULT        = (1 << 0),
+
+    // modifiers
+    BLOCK_VERSION_AUXPOW         = (1 << 8),
+
+    // bits allocated for chain ID
+    BLOCK_VERSION_CHAIN_START    = (1 << 16),
+    BLOCK_VERSION_CHAIN_END      = (1 << 30),
+};
+
+
 /** Nodes collect new transactions into a block, hash them into a hash tree,
  * and scan through nonce values to make the block's hash satisfy proof-of-work
  * requirements.  When they solve the proof-of-work, they broadcast the block
@@ -1267,6 +1297,9 @@ public:
     unsigned int nBits;
     unsigned int nNonce;
 
+    // header
+    boost::shared_ptr<CAuxPow> auxpow;
+
     CBlockHeader()
     {
         SetNull();
@@ -1281,6 +1314,8 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
+
+        nSerSize += ReadWriteAuxPow(s, auxpow, nType, nVersion, ser_action);
     )
 
     void SetNull()
@@ -1337,6 +1372,13 @@ public:
         READWRITE(vtx);
     )
 
+    int GetChainID() const
+    {  
+        return nVersion / BLOCK_VERSION_CHAIN_START;
+    }
+
+    void SetAuxPow(CAuxPow* pow);
+
     void SetNull()
     {
         CBlockHeader::SetNull();
@@ -1353,6 +1395,7 @@ public:
         block.nTime          = nTime;
         block.nBits          = nBits;
         block.nNonce         = nNonce;
+        block.auxpow         = auxpow;
         return block;
     }
 
@@ -1412,6 +1455,8 @@ public:
         return hash;
     }
 
+    bool CheckProofOfWork(int nHeight) const;
+
     bool WriteToDisk(CDiskBlockPos &pos)
     {
         // Open history file to append
@@ -1456,7 +1501,7 @@ public:
         }
 
         // Check the header
-        if (!CheckProofOfWork(GetHash(), nBits))
+        if (!CheckProofOfWork(INT_MAX))
             return error("CBlock::ReadFromDisk() : errors in block header");
 
         return true;
@@ -1501,7 +1546,7 @@ public:
     bool AddToBlockIndex(CValidationState &state, const CDiskBlockPos &pos);
 
     // Context-independent validity checks
-    bool CheckBlock(CValidationState &state, bool fCheckPOW=true, bool fCheckMerkleRoot=true) const;
+    bool CheckBlock(CValidationState &state, int nHeight, bool fCheckPOW=true, bool fCheckMerkleRoot=true) const;
 
     // Store block on disk
     // if dbp is provided, the file is known to already reside on disk
@@ -1638,6 +1683,9 @@ public:
     unsigned int nBits;
     unsigned int nNonce;
 
+    // if this is an aux work block
+    boost::shared_ptr<CAuxPow> auxpow;
+
 
     CBlockIndex()
     {
@@ -1658,6 +1706,7 @@ public:
         nTime          = 0;
         nBits          = 0;
         nNonce         = 0;
+        auxpow.reset();
     }
 
     CBlockIndex(CBlockHeader& block)
@@ -1679,6 +1728,7 @@ public:
         nTime          = block.nTime;
         nBits          = block.nBits;
         nNonce         = block.nNonce;
+        auxpow         = block.auxpow;
     }
 
     CDiskBlockPos GetBlockPos() const {
@@ -1709,6 +1759,7 @@ public:
         block.nTime          = nTime;
         block.nBits          = nBits;
         block.nNonce         = nNonce;
+        block.auxpow         = auxpow;
         return block;
     }
 
@@ -1841,6 +1892,8 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
+
+        ReadWriteAuxPow(s, auxpow, nType, this->nVersion, ser_action);
     )
 
     uint256 GetBlockHash() const

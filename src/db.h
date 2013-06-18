@@ -93,12 +93,12 @@ class CDB
 protected:
     Db* pdb;
     std::string strFile;
-    DbTxn *activeTxn;
     bool fReadOnly;
 
     explicit CDB(const char* pszFile, const char* pszMode="r+");
     ~CDB() { Close(); }
 public:
+    DbTxn *activeTxn;
     void Flush();
     void Close();
 private:

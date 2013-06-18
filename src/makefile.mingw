@@ -70,6 +70,7 @@ HEADERS = $(wildcard *.h)
 
 OBJS= \
     leveldb/libleveldb.a \
+    obj/auxpow.o \
     obj/alert.o \
     obj/version.o \
     obj/checkpoints.o \
@@ -99,7 +100,8 @@ OBJS= \
     obj/bloom.o \
     obj/noui.o \
     obj/leveldb.o \
-    obj/txdb.o
+    obj/txdb.o \
+    obj/namecoin.o
 
 
 all: namecoind.exe

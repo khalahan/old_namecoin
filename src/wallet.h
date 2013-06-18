@@ -68,7 +68,7 @@ public:
 class CWallet : public CCryptoKeyStore
 {
 private:
-    bool SelectCoins(int64 nTargetValue, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet) const;
+    //~ bool SelectCoins(int64 nTargetValue, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet) const;
 
     CWalletDB *pwalletdbEncryption;
 
@@ -79,6 +79,9 @@ private:
     int nWalletMaxVersion;
 
 public:
+    // visible for NAMECOIN
+    bool SelectCoins(int64 nTargetValue, std::set<std::pair<const CWalletTx*,unsigned int> >& setCoinsRet, int64& nValueRet) const;
+
     mutable CCriticalSection cs_wallet;
 
     bool fFileBacked;

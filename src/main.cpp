@@ -3,12 +3,14 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "hook.h"
 #include "alert.h"
 #include "checkpoints.h"
 #include "db.h"
 #include "txdb.h"
 #include "net.h"
 #include "init.h"
+#include "auxpow.h"
 #include "ui_interface.h"
 #include "checkqueue.h"
 #include <boost/algorithm/string/replace.hpp>
@@ -47,6 +49,7 @@ bool fReindex = false;
 bool fBenchmark = false;
 bool fTxIndex = false;
 unsigned int nCoinCacheSize = 5000;
+CHooks* hooks;
 
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
 int64 CTransaction::nMinTxFee = 10000;  // Override with -mintxfee
@@ -1138,9 +1141,15 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
         return pindexLast->nBits;
     }
 
+    // Go back the full period unless it's the first retarget after genesis. Code courtesy of ArtForz
+
+    int nBlocksBack = nInterval-1;
+    if(pindexLast->nHeight >= hooks->GetFullRetargetStartBlock() && ((pindexLast->nHeight+1) > nInterval))
+        nBlocksBack = nInterval;
+
     // Go back by what we want to be 14 days worth of blocks
     const CBlockIndex* pindexFirst = pindexLast;
-    for (int i = 0; pindexFirst && i < nInterval-1; i++)
+    for (int i = 0; pindexFirst && i < nBlocksBack; i++)
         pindexFirst = pindexFirst->pprev;
     assert(pindexFirst);
 
@@ -1591,7 +1600,7 @@ void ThreadScriptCheck() {
 bool CBlock::ConnectBlock(CValidationState &state, CBlockIndex* pindex, CCoinsViewCache &view, bool fJustCheck)
 {
     // Check it again in case a previous version let a bad block in
-    if (!CheckBlock(state, !fJustCheck, !fJustCheck))
+    if (!CheckBlock(state, pindex->nHeight, !fJustCheck, !fJustCheck))
         return false;
 
     // verify that the view's current state corresponds to the previous block
@@ -2063,8 +2072,61 @@ bool FindUndoPos(CValidationState &state, int nFile, CDiskBlockPos &pos, unsigne
     return true;
 }
 
+// Start accepting AUX POW at this block
+//
+// Even if we do not accept AUX POW ourselves, we can always be the parent chain.
 
-bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerkleRoot) const
+int GetAuxPowStartBlock()
+{
+    return hooks->GetAuxPowStartBlock();
+}
+
+int GetOurChainID()
+{
+    return hooks->GetOurChainID();
+}
+
+bool CBlock::CheckProofOfWork(int nHeight) const
+{
+    if (nHeight >= GetAuxPowStartBlock())
+    {
+        // Prevent same work from being submitted twice:
+        // - this block must have our chain ID
+        // - parent block must not have the same chain ID (see CAuxPow::Check)
+        // - index of this chain in chain merkle tree must be pre-determined (see CAuxPow::Check)
+        if (!fTestNet && nHeight != INT_MAX && GetChainID() != GetOurChainID())
+            return error("CheckProofOfWork() : block does not have our chain ID");
+
+        if (auxpow.get() != NULL)
+        {
+            if (!auxpow->Check(GetHash(), GetChainID()))
+                return error("CheckProofOfWork() : AUX POW is not valid");
+            // Check proof of work matches claimed amount
+            if (!::CheckProofOfWork(auxpow->GetParentBlockHash(), nBits))
+                return error("CheckProofOfWork() : AUX proof of work failed");
+        }
+        else
+        {
+            // Check proof of work matches claimed amount
+            if (!::CheckProofOfWork(GetHash(), nBits))
+                return error("CheckProofOfWork() : proof of work failed");
+        }
+    }
+    else
+    {
+        if (auxpow.get() != NULL)
+        {
+            return error("CheckProofOfWork() : AUX POW is not allowed at this block");
+        }
+
+        // Check proof of work matches claimed amount
+        if (!::CheckProofOfWork(GetHash(), nBits))
+            return error("CheckProofOfWork() : proof of work failed");
+    }
+    return true;
+}
+
+bool CBlock::CheckBlock(CValidationState &state, int nHeight, bool fCheckPOW, bool fCheckMerkleRoot) const
 {
     // These are checks that are independent of context
     // that can be verified before saving an orphan block.
@@ -2093,7 +2155,8 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
     }
 
     // Check proof of work matches claimed amount
-    if (fCheckPOW && !CheckProofOfWork(GetHash(), nBits))
+    //if (fCheckPOW && !CheckProofOfWork(GetHash(), nBits))
+    if (fCheckPOW && !CheckProofOfWork(nHeight))
         return state.DoS(50, error("CheckBlock() : proof of work failed"));
 
     // Check timestamp
@@ -2250,7 +2313,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
         return state.Invalid(error("ProcessBlock() : already have block (orphan) %s", hash.ToString().c_str()));
 
     // Preliminary checks
-    if (!pblock->CheckBlock(state))
+    if (!pblock->CheckBlock(state, INT_MAX))
         return error("ProcessBlock() : CheckBlock FAILED");
 
     CBlockIndex* pcheckpoint = Checkpoints::GetLastCheckpoint(mapBlockIndex);
@@ -2648,7 +2711,7 @@ bool VerifyDB() {
         if (!block.ReadFromDisk(pindex))
             return error("VerifyDB() : *** block.ReadFromDisk failed at %d, hash=%s", pindex->nHeight, pindex->GetBlockHash().ToString().c_str());
         // check level 1: verify block validity
-        if (nCheckLevel >= 1 && !block.CheckBlock(state))
+        if (nCheckLevel >= 1 && !block.CheckBlock(state, pindex->nHeight))
             return error("VerifyDB() : *** found bad block at %d, hash=%s\n", pindex->nHeight, pindex->GetBlockHash().ToString().c_str());
         // check level 2: verify undo validity
         if (nCheckLevel >= 2 && pindex) {
