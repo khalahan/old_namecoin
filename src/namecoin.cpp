@@ -343,7 +343,7 @@ bool CreateTransactionWithInputTx(const vector<pair<CScript, int64> >& vecSend, 
 
                     // Reserve a new key pair from key pool
                     vector<unsigned char> vchPubKey = reservekey.GetReservedKey();
-                    assert(pwalletMain->HaveKey(vchPubKey));
+                    assert(pwalletMain->HaveKey(Hash160(vchPubKey)));
 
                     // Fill a vout to ourself, using same address type as the payment
                     CScript scriptChange;

@@ -124,7 +124,6 @@ public:
 
 bool CWallet::EncryptWallet(const string& strWalletPassphrase)
 {
-    CRITICAL_BLOCK(cs_mapPubKeys)
     CRITICAL_BLOCK(cs_KeyStore)
     CRITICAL_BLOCK(cs_vMasterKey)
     CRITICAL_BLOCK(cs_pwalletdbEncryption)
@@ -441,10 +440,8 @@ void CWalletTx::GetAmounts(int64& nGeneratedImmature, int64& nGeneratedMature, l
         string address;
         uint160 hash160;
         vector<unsigned char> vchPubKey;
-        if (ExtractHash160(txout.scriptPubKey, hash160))
+        if (ExtractHash160(txout.scriptPubKey, pwallet, hash160))
             address = Hash160ToAddress(hash160);
-        else if (ExtractPubKey(txout.scriptPubKey, NULL, vchPubKey))
-            address = PubKeyToAddress(vchPubKey);
         else if (hooks->ExtractAddress(txout.scriptPubKey, address))
             ;
         else
@@ -1150,7 +1147,7 @@ int CWallet::LoadWallet(bool& fFirstRunRet)
         return nLoadWalletRet;
     fFirstRunRet = vchDefaultKey.empty();
 
-    if (!HaveKey(vchDefaultKey))
+    if (!HaveKey(Hash160(vchDefaultKey)))
     {
         // Create new keyUser and set as default key
         RandAddSeedPerfmon();
@@ -1277,7 +1274,7 @@ void CWallet::ReserveKeyFromKeyPool(int64& nIndex, CKeyPool& keypool)
         setKeyPool.erase(setKeyPool.begin());
         if (!walletdb.ReadPool(nIndex, keypool))
             throw runtime_error("ReserveKeyFromKeyPool() : read failed");
-        if (!HaveKey(keypool.vchPubKey))
+        if (!HaveKey(Hash160(keypool.vchPubKey)))
             throw runtime_error("ReserveKeyFromKeyPool() : unknown key in key pool");
         assert(!keypool.vchPubKey.empty());
         printf("keypool reserve %"PRI64d"\n", nIndex);
