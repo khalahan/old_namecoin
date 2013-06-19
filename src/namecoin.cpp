@@ -83,7 +83,7 @@ public:
     virtual string IrcPrefix();
     virtual void AcceptToMemoryPool(CTxDB& txdb, const CTransaction& tx);
 
-    virtual void MessageStart(char* pchMessageStart)
+    virtual void MessageStart(unsigned char* pchMessageStart)
     {
         // Make the message start different
         pchMessageStart[3] = 0xfe;

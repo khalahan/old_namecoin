@@ -34,7 +34,7 @@ public:
     virtual bool Lockin(int nHeight, uint256 hash);
     virtual int LockinHeight();
     virtual string IrcPrefix();
-    virtual void MessageStart(char* pchMessageStart)
+    virtual void MessageStart(unsigned char* pchMessageStart)
     {
     }
     void AcceptToMemoryPool(CTxDB& txdb, const CTransaction& tx)
