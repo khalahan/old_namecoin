@@ -507,7 +507,7 @@ bool GetTxOfName(CNameDB& dbName, vector<unsigned char> vchName, CTransaction& t
     return true;
 }
 
-bool GetNameAddress(const CTransaction& tx, std::string& strAddress)
+bool GetNameAddress(const CTransaction& tx, CBitcoinAddress& address)
 {
     int op;
     int nOut;
@@ -515,20 +515,17 @@ bool GetNameAddress(const CTransaction& tx, std::string& strAddress)
     DecodeNameTx(tx, op, nOut, vvch);
     const CTxOut& txout = tx.vout[nOut];
     const CScript& scriptPubKey = RemoveNameScriptPrefix(txout.scriptPubKey);
-    //strAddress = scriptPubKey.GetBitcoinAddress();
-	CBitcoinAddress address;
-	if (ExtractAddress(scriptPubKey, NULL, address))
-        strAddress = address.ToString();
+	ExtractAddress(scriptPubKey, NULL, address);
     return true;
 }
 
-bool GetNameAddress(const CDiskTxPos& txPos, std::string& strAddress)
+bool GetNameAddress(const CDiskTxPos& txPos, CBitcoinAddress& address)
 {
     CTransaction tx;
     if (!tx.ReadFromDisk(txPos))
         return error("GetNameAddress() : could not read tx from disk");
 
-    return GetNameAddress(tx, strAddress);
+    return GetNameAddress(tx, address);
 }
 
 Value sendtoname(const Array& params, bool fHelp)
@@ -543,12 +540,11 @@ Value sendtoname(const Array& params, bool fHelp)
     if (!dbName.ExistsName(vchName))
         throw JSONRPCError(-5, "Name not found");
     
-    string strAddress;
     CTransaction tx;
     GetTxOfName(dbName, vchName, tx);
-    GetNameAddress(tx, strAddress);
+    CBitcoinAddress address;
+    GetNameAddress(tx, address);
     
-    CBitcoinAddress address(strAddress);
     if (!address.IsValid())
         throw JSONRPCError(-5, "No valid namecoin address");
 
@@ -564,7 +560,7 @@ Value sendtoname(const Array& params, bool fHelp)
 
     CRITICAL_BLOCK(cs_main)
     {  
-        string strError = pwalletMain->SendMoneyToBitcoinAddress(strAddress, nAmount, wtx);
+        string strError = pwalletMain->SendMoneyToBitcoinAddress(address, nAmount, wtx);
         if (strError != "")
             throw JSONRPCError(-4, strError);
     }
@@ -638,9 +634,9 @@ Value name_list(const Array& params, bool fHelp)
             oName.push_back(Pair("value", stringFromVch(vchValue)));
             if (!hooks->IsMine(pwalletMain->mapWallet[tx.GetHash()]))
                 oName.push_back(Pair("transferred", 1));
-            string strAddress = "";
-            GetNameAddress(tx, strAddress);
-            oName.push_back(Pair("address", strAddress));
+            CBitcoinAddress address;
+            GetNameAddress(tx, address);
+            oName.push_back(Pair("address", address.ToString()));
             oName.push_back(Pair("expires_in", nHeight + GetDisplayExpirationDepth(nHeight) - pindexBest->nHeight));
             if(nHeight + GetDisplayExpirationDepth(nHeight) - pindexBest->nHeight <= 0)
             {
@@ -763,9 +759,9 @@ Value name_show(const Array& params, bool fHelp)
             string value = stringFromVch(vchValue);
             oName.push_back(Pair("value", value));
             oName.push_back(Pair("txid", tx.GetHash().GetHex()));
-            string strAddress = "";
-            GetNameAddress(txPos, strAddress);
-            oName.push_back(Pair("address", strAddress));
+            CBitcoinAddress address;
+            GetNameAddress(txPos, address);
+            oName.push_back(Pair("address", address.ToString()));
             oName.push_back(Pair("expires_in", nHeight + GetDisplayExpirationDepth(nHeight) - pindexBest->nHeight));
             if(nHeight + GetDisplayExpirationDepth(nHeight) - pindexBest->nHeight <= 0)
             {
@@ -817,9 +813,9 @@ Value name_history(const Array& params, bool fHelp)
                 string value = stringFromVch(vchValue);
                 oName.push_back(Pair("value", value));
                 oName.push_back(Pair("txid", tx.GetHash().GetHex()));
-                string strAddress = "";
-                GetNameAddress(txPos, strAddress);
-                oName.push_back(Pair("address", strAddress));
+                CBitcoinAddress address;
+                GetNameAddress(txPos, address);
+                oName.push_back(Pair("address", address.ToString()));
                 oName.push_back(Pair("expires_in", nHeight + GetDisplayExpirationDepth(nHeight) - pindexBest->nHeight));
                 if(nHeight + GetDisplayExpirationDepth(nHeight) - pindexBest->nHeight <= 0)
                 {
@@ -1143,11 +1139,10 @@ Value name_update(const Array& params, bool fHelp)
 
     if (params.size() == 3)
     {
-        string strAddress = params[2].get_str();
-        CBitcoinAddress address(strAddress);
+        CBitcoinAddress address(params[2].get_str());
         if (!address.IsValid())
             throw JSONRPCError(-5, "Invalid namecoin address");
-        scriptPubKeyOrig.SetBitcoinAddress(strAddress);
+        scriptPubKeyOrig.SetBitcoinAddress(address.ToString());
     }
     else
     {
@@ -1407,7 +1402,7 @@ Value sendtoalias(const Array& params, bool fHelp)
     if (json.empty())
         throw JSONRPCError(-5, "expected json to contain data");
     
-    string strAddress;
+    CBitcoinAddress address;
     const Value& namecoin = find_value(json, "namecoin");
     if (namecoin.type() == null_type)
         throw JSONRPCError(-5, "Namecoin data should be a string or a json object");
@@ -1418,15 +1413,14 @@ Value sendtoalias(const Array& params, bool fHelp)
     	if (ndefault.type() == null_type)
         	throw JSONRPCError(-5, "A namecoin object should have a 'default' address");
 		else if (ndefault.type() == str_type)
-        	strAddress = ndefault.get_str();
+        	address = ndefault.get_str();
 		else
         	throw JSONRPCError(-5, "Namecoin default address should be a string");
 	} else if (namecoin.type() == str_type) {
-        strAddress = namecoin.get_str();
+        address = namecoin.get_str();
 	} else
         throw JSONRPCError(-5, "Namecoin data should be a string or a json object");
     
-    CBitcoinAddress address(strAddress);
     if (!address.IsValid())
         throw JSONRPCError(-5, "No valid namecoin address");
 
@@ -1442,7 +1436,7 @@ Value sendtoalias(const Array& params, bool fHelp)
 
     CRITICAL_BLOCK(cs_main)
     {  
-        string strError = pwalletMain->SendMoneyToBitcoinAddress(strAddress, nAmount, wtx);
+        string strError = pwalletMain->SendMoneyToBitcoinAddress(address, nAmount, wtx);
         if (strError != "")
             throw JSONRPCError(-4, strError);
     }
