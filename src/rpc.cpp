@@ -715,7 +715,7 @@ Value sendtoaddress(const Array& params, bool fHelp)
     CRITICAL_BLOCK(pwalletMain->cs_vMasterKey)
     {
         if(pwalletMain->IsLocked())
-            throw JSONRPCError(-14, "Error: The wallet passphrase entered was incorrect.");
+            throw JSONRPCError(-13, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
         string strError = pwalletMain->SendMoneyToBitcoinAddress(address, nAmount, wtx);
         if (strError != "")
@@ -990,7 +990,7 @@ Value sendfrom(const Array& params, bool fHelp)
     CRITICAL_BLOCK(pwalletMain->cs_vMasterKey)
     {
         if(pwalletMain->IsLocked())
-            throw JSONRPCError(-14, "Error: The wallet passphrase entered was incorrect.");
+            throw JSONRPCError(-13, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
         // Check funds
         int64 nBalance = GetAccountBalance(strAccount, nMinDepth);
@@ -1057,7 +1057,7 @@ Value sendmany(const Array& params, bool fHelp)
     CRITICAL_BLOCK(pwalletMain->cs_vMasterKey)
     {
         if(pwalletMain->IsLocked())
-            throw JSONRPCError(-14, "Error: The wallet passphrase entered was incorrect.");
+            throw JSONRPCError(-13, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
         // Check funds
         int64 nBalance = GetAccountBalance(strAccount, nMinDepth);
