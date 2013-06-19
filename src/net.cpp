@@ -1092,7 +1092,7 @@ void ThreadMapPort2(void* parg)
     {
         char intClient[16];
         char intPort[6];
-        string strDesc = "Bitcoin " + FormatFullVersion();
+        string strDesc = "Namecoin " + FormatFullVersion();
 
 #ifndef __WXMSW__
         r = UPNP_AddPortMapping(urls.controlURL, data.first.servicetype,
