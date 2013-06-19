@@ -73,7 +73,7 @@ int CStandardHooks::LockinHeight()
     if (fTestNet)
         return 0;
 
-    return 134444;
+    return 140700;
 }
 
 bool CStandardHooks::Lockin(int nHeight, uint256 hash)
@@ -86,7 +86,8 @@ bool CStandardHooks::Lockin(int nHeight, uint256 hash)
                 (nHeight ==  74000 && hash != uint256("0x0000000000573993a3c9e41ce34471c079dcf5f52a0e824a81e7f953b8661a20")) ||
                 (nHeight == 105000 && hash != uint256("0x00000000000291ce28027faea320c8d2b054b2e0fe44a773f3eefb151d6bdc97")) ||
                 (nHeight == 118000 && hash != uint256("0x000000000000774a7f8a7a12dc906ddb9e17e75d684f15e00f8767f9e8f36553")) ||
-                (nHeight == 134444 && hash != uint256("0x00000000000005b12ffd4cd315cd34ffd4a594f430ac814c91184a0d42d2b0fe")))
+                (nHeight == 134444 && hash != uint256("0x00000000000005b12ffd4cd315cd34ffd4a594f430ac814c91184a0d42d2b0fe")) ||
+                (nHeight == 140700 && hash != uint256("0x000000000000033b512028abb90e1626d8b346fd0ed598ac0a3c371138dce2bd")))
             return false;
     return true;
 }

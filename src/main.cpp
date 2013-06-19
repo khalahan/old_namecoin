@@ -32,7 +32,7 @@ map<COutPoint, CInPoint> mapNextTx;
 map<uint256, CBlockIndex*> mapBlockIndex;
 uint256 hashGenesisBlock("0x000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f");
 CBigNum bnProofOfWorkLimit(~uint256(0) >> 32);
-const int nTotalBlocksEstimate = 134444; // Conservative estimate of total nr of blocks on main chain
+const int nTotalBlocksEstimate = 140700; // Conservative estimate of total nr of blocks on main chain
 const int nInitialBlockThreshold = 120; // Regard blocks up until N-threshold as "initial download"
 CBlockIndex* pindexGenesisBlock = NULL;
 int nBestHeight = -1;
@@ -296,9 +296,10 @@ int CMerkleTx::SetMerkleBranch(const CBlock* pblock)
 bool CTransaction::CheckTransaction() const
 {
     // Basic checks that don't depend on any context
-    if (vin.empty() || vout.empty())
-        return error("CTransaction::CheckTransaction() : vin or vout empty");
-
+    if (vin.empty())
+        return error("CTransaction::CheckTransaction() : vin empty");
+    if (vout.empty())
+        return error("CTransaction::CheckTransaction() : vout empty");
     // Size limits
     if (::GetSerializeSize(*this, SER_NETWORK) > MAX_BLOCK_SIZE)
         return error("CTransaction::CheckTransaction() : size limits failed");
@@ -2717,7 +2718,7 @@ unsigned int static ScanHash_CryptoPP(char* pmidstate, char* pdata, char* phash1
     }
 }
 
-
+// Some explaining would be appreciated
 class COrphan
 {
 public:
