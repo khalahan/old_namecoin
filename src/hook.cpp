@@ -26,7 +26,7 @@ public:
             CBlockIndex* pindexBlock);
     virtual bool ConnectBlock(CBlock& block, CTxDB& txdb, CBlockIndex* pindex);
     virtual bool DisconnectBlock(CBlock& block, CTxDB& txdb, CBlockIndex* pindex);
-    virtual bool ExtractAddress(const CScript& script, string& address);
+    virtual bool ExtractAddressNamecoin(const CScript& script, CBitcoinAddress& address);
     virtual bool GenesisBlock(CBlock& block)
     {
         return false;
@@ -135,7 +135,7 @@ bool CStandardHooks::DisconnectBlock(CBlock& block, CTxDB& txdb, CBlockIndex* pi
     return true;
 }
 
-bool CStandardHooks::ExtractAddress(const CScript& script, string& address) {
+bool CStandardHooks::ExtractAddressNamecoin(const CScript& script, CBitcoinAddress& address) {
     return false;
 }
 
@@ -219,6 +219,3 @@ string GetDefaultDataDirSuffix() {
 #endif
 }
 
-unsigned char GetAddressVersion() {
-    return ((unsigned char)(fTestNet ? 111 : 0));
-}

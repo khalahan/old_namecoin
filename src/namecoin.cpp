@@ -76,7 +76,7 @@ public:
             CBlockIndex* pindexBlock);
     virtual bool ConnectBlock(CBlock& block, CTxDB& txdb, CBlockIndex* pindex);
     virtual bool DisconnectBlock(CBlock& block, CTxDB& txdb, CBlockIndex* pindex);
-    virtual bool ExtractAddress(const CScript& script, string& address);
+    virtual bool ExtractAddressNamecoin(const CScript& script, CBitcoinAddress& address);
     virtual bool GenesisBlock(CBlock& block);
     virtual bool Lockin(int nHeight, uint256 hash);
     virtual int LockinHeight();
@@ -347,7 +347,7 @@ bool CreateTransactionWithInputTx(const vector<pair<CScript, int64> >& vecSend, 
 
                     // Fill a vout to ourself, using same address type as the payment
                     CScript scriptChange;
-                    if (vecSend[0].first.GetBitcoinAddressHash160() != 0)
+                    if (vecSend[0].first.GetBitcoinAddress().IsValid())
                         scriptChange.SetBitcoinAddress(vchPubKey);
                     else
                         scriptChange << vchPubKey << OP_CHECKSIG;
@@ -515,7 +515,10 @@ bool GetNameAddress(const CTransaction& tx, std::string& strAddress)
     DecodeNameTx(tx, op, nOut, vvch);
     const CTxOut& txout = tx.vout[nOut];
     const CScript& scriptPubKey = RemoveNameScriptPrefix(txout.scriptPubKey);
-    strAddress = scriptPubKey.GetBitcoinAddress();
+    //strAddress = scriptPubKey.GetBitcoinAddress();
+	CBitcoinAddress address;
+	if (ExtractAddress(scriptPubKey, pwalletMain, address))
+        strAddress = address.ToString();
     return true;
 }
 
@@ -545,8 +548,8 @@ Value sendtoname(const Array& params, bool fHelp)
     GetTxOfName(dbName, vchName, tx);
     GetNameAddress(tx, strAddress);
     
-    uint160 hash160;
-    if (!AddressToHash160(strAddress, hash160))
+    CBitcoinAddress address(strAddress);
+    if (!address.IsValid())
         throw JSONRPCError(-5, "No valid namecoin address");
 
     // Amount
@@ -1141,9 +1144,8 @@ Value name_update(const Array& params, bool fHelp)
     if (params.size() == 3)
     {
         string strAddress = params[2].get_str();
-        uint160 hash160;
-        bool isValid = AddressToHash160(strAddress, hash160);
-        if (!isValid)
+        CBitcoinAddress address(strAddress);
+        if (!address.IsValid())
             throw JSONRPCError(-5, "Invalid namecoin address");
         scriptPubKeyOrig.SetBitcoinAddress(strAddress);
     }
@@ -1424,8 +1426,8 @@ Value sendtoalias(const Array& params, bool fHelp)
 	} else
         throw JSONRPCError(-5, "Namecoin data should be a string or a json object");
     
-    uint160 hash160;
-    if (!AddressToHash160(strAddress, hash160))
+    CBitcoinAddress address(strAddress);
+    if (!address.IsValid())
         throw JSONRPCError(-5, "No valid namecoin address");
 
     // Amount
@@ -2142,7 +2144,7 @@ static string nameFromOp(int op)
     }
 }
 
-bool CNamecoinHooks::ExtractAddress(const CScript& script, string& address)
+bool CNamecoinHooks::ExtractAddressNamecoin(const CScript& script, CBitcoinAddress& address)
 {
     if (script.size() == 1 && script[0] == OP_RETURN)
     {
@@ -2258,4 +2260,3 @@ string GetDefaultDataDirSuffix() {
 #endif
 }
 
-unsigned char GetAddressVersion() { return ((unsigned char)(fTestNet ? 111 : 52)); }

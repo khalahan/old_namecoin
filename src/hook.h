@@ -22,7 +22,7 @@ public:
             CBlockIndex* pindexBlock) = 0;
     virtual bool ConnectBlock(CBlock& block, CTxDB& txdb, CBlockIndex* pindex) = 0;
     virtual bool DisconnectBlock(CBlock& block, CTxDB& txdb, CBlockIndex* pindex) = 0;
-    virtual bool ExtractAddress(const CScript& script, std::string& address) = 0;
+    virtual bool ExtractAddressNamecoin(const CScript& script, CBitcoinAddress& address) = 0;
     virtual bool GenesisBlock(CBlock& block) = 0;
     virtual bool Lockin(int nHeight, uint256 hash) = 0;
     virtual int LockinHeight() = 0;
