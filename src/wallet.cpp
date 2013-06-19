@@ -439,7 +439,7 @@ void CWalletTx::GetAmounts(int64& nGeneratedImmature, int64& nGeneratedMature, l
     {
         CBitcoinAddress address;
         vector<unsigned char> vchPubKey;
-        if (!ExtractAddress(txout.scriptPubKey, pwallet, address)
+        if (!ExtractAddress(txout.scriptPubKey, NULL, address)
 		    || !hooks->ExtractAddressNamecoin(txout.scriptPubKey, address))
         {
             printf("CWalletTx::GetAmounts: Unknown transaction type found, txid %s\n",

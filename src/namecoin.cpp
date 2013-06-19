@@ -517,7 +517,7 @@ bool GetNameAddress(const CTransaction& tx, std::string& strAddress)
     const CScript& scriptPubKey = RemoveNameScriptPrefix(txout.scriptPubKey);
     //strAddress = scriptPubKey.GetBitcoinAddress();
 	CBitcoinAddress address;
-	if (ExtractAddress(scriptPubKey, pwalletMain, address))
+	if (ExtractAddress(scriptPubKey, NULL, address))
         strAddress = address.ToString();
     return true;
 }
