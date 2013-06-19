@@ -1128,7 +1128,7 @@ string CWallet::SendMoneyToBitcoinAddress(string strAddress, int64 nValue, CWall
 
 
 
-bool CWallet::LoadWallet(bool& fFirstRunRet)
+int CWallet::LoadWallet(bool& fFirstRunRet)
 {
     if (!fFileBacked)
         return false;
@@ -1145,11 +1145,11 @@ bool CWallet::LoadWallet(bool& fFirstRunRet)
 
         SetDefaultKey(GetOrReuseKeyFromPool());
         if (!SetAddressBookName(PubKeyToAddress(vchDefaultKey), ""))
-            return false;
+            return DB_LOAD_FAIL;
     }
 
     CreateThread(ThreadFlushWalletDB, &strWalletFile);
-    return true;
+    return DB_LOAD_OK;
 }
 
 
