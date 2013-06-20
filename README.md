@@ -50,6 +50,7 @@ RUNNING
 
 You can acquire namecoins in the usual bitcoin way, by mining or by reciving some from others.  After you have acquired some namecoins, use:
 
+
 `namecoind name_new d/<name>`
 
 This will reserve a name but not make it visible yet.  Make a note of the short hex number.  You will need it for the next step.  (Do not shut down namecoind or you will also have to supply the longer hex code below.)  Wait about 12 blocks, then issue:
@@ -83,10 +84,13 @@ Values for names in the d/ namespace are JSON encoded.  The simplest value is of
 
 A [full specification](http://dot-bit.org/Domain_names) is in progress.
 
-If it is a more complicated or potentially controversial change, then the patch submitter will be asked to start a discussion (if they haven't already) on the mailing list:  http://sourceforge.net/mailarchive/forum.php?forum_name=bitcoin-development
-The patch will be accepted if there is broad consensus that it is a good thing.  Developers should expect to rework and resubmit patches if they don't match the project's coding conventions (see coding.txt) or are controversial.
+The master branch is regularly built and tested, but is not guaranteed
+to be completely stable. Tags are regularly created to indicate new
+official, stable release versions of Bitcoin. If you would like to
+help test the Bitcoin core, please contact QA@Bitcoin.org.
 
-The master branch is regularly built and tested, but is not guaranteed to be completely stable. Tags are regularly created to indicate new official, stable release versions of Bitcoin. If you would like to help test the Bitcoin core, please contact QA@Bitcoin.org.
+Feature branches are created when there are major new features being
+worked on by several people.
 
 Feature branches are created when there are major new features being worked on by several people.
 
