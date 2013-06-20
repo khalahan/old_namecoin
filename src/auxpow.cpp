@@ -102,17 +102,17 @@ bool CAuxPow::Check(uint256 hashAuxBlock, int nChainID)
     return true;
 }
 
-CScript MakeCoinbaseWithAux(unsigned int nBits, unsigned int nExtraNonce, vector<unsigned char>& vchAux)
+CScript MakeCoinbaseWithAux(unsigned int nTime, unsigned int nExtraNonce, vector<unsigned char>& vchAux)
 {
     vector<unsigned char> vchAuxWithHeader(UBEGIN(pchMergedMiningHeader), UEND(pchMergedMiningHeader));
     vchAuxWithHeader.insert(vchAuxWithHeader.end(), vchAux.begin(), vchAux.end());
 
     // Push OP_2 just in case we want versioning later
-    return CScript() << nBits << nExtraNonce << OP_2 << vchAuxWithHeader;
+    return CScript() << nTime << nExtraNonce << OP_2 << vchAuxWithHeader;
 }
 
 
-void IncrementExtraNonceWithAux(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& nExtraNonce, int64& nPrevTime, vector<unsigned char>& vchAux)
+void IncrementExtraNonceWithAux(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& nExtraNonce, vector<unsigned char>& vchAux)
 {
     // Update nExtraNonce
     static uint256 hashPrevBlock;
@@ -122,7 +122,7 @@ void IncrementExtraNonceWithAux(CBlock* pblock, CBlockIndex* pindexPrev, unsigne
         hashPrevBlock = pblock->hashPrevBlock;
     }
     ++nExtraNonce;
-    pblock->vtx[0].vin[0].scriptSig = MakeCoinbaseWithAux(pblock->nBits, nExtraNonce, vchAux);
+    pblock->vtx[0].vin[0].scriptSig = MakeCoinbaseWithAux(pblock->nTime, nExtraNonce, vchAux);
     pblock->hashMerkleRoot = pblock->BuildMerkleTree();
 }
 
