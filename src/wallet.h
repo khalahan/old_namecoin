@@ -468,6 +468,8 @@ public:
         return nChangeCached;
     }
 
+    void GetAmounts(int64& nGeneratedImmature, int64& nGeneratedMature, std::list<std::pair<std::string, int64> >& listReceived,
+                    std::list<std::pair<std::string, int64> >& listSent, int64& nFee, std::string& strSentAccount) const;
     void GetAmounts(int64& nGeneratedImmature, int64& nGeneratedMature, std::list<std::pair<CBitcoinAddress, int64> >& listReceived,
                     std::list<std::pair<CBitcoinAddress, int64> >& listSent, int64& nFee, std::string& strSentAccount) const;
 

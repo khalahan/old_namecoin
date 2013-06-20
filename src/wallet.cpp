@@ -398,8 +398,28 @@ int CWalletTx::GetRequestCount() const
     return nRequests;
 }
 
+
 void CWalletTx::GetAmounts(int64& nGeneratedImmature, int64& nGeneratedMature, list<pair<CBitcoinAddress, int64> >& listReceived,
                            list<pair<CBitcoinAddress, int64> >& listSent, int64& nFee, string& strSentAccount) const
+{
+    list<pair<string, int64> > listReceivedStr;
+    list<pair<string, int64> > listSentStr;
+    GetAmounts(nGeneratedImmature, nGeneratedMature, listReceivedStr, listSentStr, nFee, strSentAccount);
+
+    BOOST_FOREACH(const PAIRTYPE(string, int64)& r, listReceivedStr)
+    {
+        listReceived.push_back(make_pair(CBitcoinAddress(r.first), r.second));
+    }
+
+    BOOST_FOREACH(const PAIRTYPE(string, int64)& s, listSentStr)
+    {
+        listSent.push_back(make_pair(CBitcoinAddress(s.first), s.second));
+    }
+}
+
+// return addresses as string to view namecoin name_* in address
+void CWalletTx::GetAmounts(int64& nGeneratedImmature, int64& nGeneratedMature, list<pair<string, int64> >& listReceived,
+                           list<pair<string, int64> >& listSent, int64& nFee, string& strSentAccount) const
 {
     nGeneratedImmature = nGeneratedMature = nFee = 0;
     listReceived.clear();
@@ -427,14 +447,17 @@ void CWalletTx::GetAmounts(int64& nGeneratedImmature, int64& nGeneratedMature, l
     // but non-standard clients might (so return a list of address/amount pairs)
     BOOST_FOREACH(const CTxOut& txout, vout)
     {
-        CBitcoinAddress address;
+        string address;
         vector<unsigned char> vchPubKey;
-        if (!ExtractAddress(txout.scriptPubKey, NULL, address)
-		    || !hooks->ExtractAddressNamecoin(txout.scriptPubKey, address))
+
+        if (!ExtractAddress(txout.scriptPubKey, NULL, address))
         {
-            printf("CWalletTx::GetAmounts: Unknown transaction type found, txid %s\n",
-                   this->GetHash().ToString().c_str());
-            address = " unknown ";
+            if (!hooks->ExtractAddressNamecoin(txout.scriptPubKey, address))
+            {
+                printf("CWalletTx::GetAmounts: Unknown transaction type found, txid %s\n",
+                       this->GetHash().ToString().c_str());
+                address = " unknown ";
+            }
         }
 
         // Don't report 'change' txouts

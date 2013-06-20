@@ -26,7 +26,7 @@ public:
             CBlockIndex* pindexBlock);
     virtual bool ConnectBlock(CBlock& block, CTxDB& txdb, CBlockIndex* pindex);
     virtual bool DisconnectBlock(CBlock& block, CTxDB& txdb, CBlockIndex* pindex);
-    virtual bool ExtractAddressNamecoin(const CScript& script, CBitcoinAddress& address);
+    virtual bool ExtractAddressNamecoin(const CScript& script, string& address);
     virtual bool GenesisBlock(CBlock& block)
     {
         return false;
@@ -136,7 +136,7 @@ bool CStandardHooks::DisconnectBlock(CBlock& block, CTxDB& txdb, CBlockIndex* pi
     return true;
 }
 
-bool CStandardHooks::ExtractAddressNamecoin(const CScript& script, CBitcoinAddress& address) {
+bool CStandardHooks::ExtractAddressNamecoin(const CScript& script, string& address) {
     return false;
 }
 

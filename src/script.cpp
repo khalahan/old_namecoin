@@ -1137,6 +1137,14 @@ bool static ExtractAddressInner(const CScript& scriptPubKey, const CKeyStore* ke
     return false;
 }
 
+bool ExtractAddress(const CScript& scriptPubKey, const CKeyStore* keystore, string& addressRet)
+{
+    bool found;
+    CBitcoinAddress address;
+    found = ExtractAddress(scriptPubKey, keystore, address);
+    addressRet = address.ToString();
+    return found;
+}
 
 bool ExtractAddress(const CScript& scriptPubKey, const CKeyStore* keystore, CBitcoinAddress& addressRet)
 {

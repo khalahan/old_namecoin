@@ -702,6 +702,7 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
 
 bool IsStandard(const CScript& scriptPubKey);
 bool IsMine(const CKeyStore& keystore, const CScript& scriptPubKey);
+bool ExtractAddress(const CScript& scriptPubKey, const CKeyStore* keystore, std::string& addressRet);
 bool ExtractAddress(const CScript& scriptPubKey, const CKeyStore* pkeystore, CBitcoinAddress& addressRet);
 bool SignSignature(const CKeyStore& keystore, const CTransaction& txFrom, CTransaction& txTo, unsigned int nIn, int nHashType=SIGHASH_ALL, CScript scriptPrereq=CScript());
 bool VerifySignature(const CTransaction& txFrom, const CTransaction& txTo, unsigned int nIn, int nHashType=0);
