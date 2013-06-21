@@ -515,7 +515,7 @@ bool GetNameAddress(const CTransaction& tx, CBitcoinAddress& address)
     DecodeNameTx(tx, op, nOut, vvch);
     const CTxOut& txout = tx.vout[nOut];
     const CScript& scriptPubKey = RemoveNameScriptPrefix(txout.scriptPubKey);
-	ExtractAddress(scriptPubKey, NULL, address);
+    ExtractAddress(scriptPubKey, NULL, address);
     return true;
 }
 
@@ -560,6 +560,9 @@ Value sendtoname(const Array& params, bool fHelp)
 
     CRITICAL_BLOCK(cs_main)
     {  
+        if (pwalletMain->IsLocked())
+            throw JSONRPCError(-13, "Error: Please enter the wallet passphrase with walletpassphrase first.");
+
         string strError = pwalletMain->SendMoneyToBitcoinAddress(address, nAmount, wtx);
         if (strError != "")
             throw JSONRPCError(-4, strError);
@@ -1076,6 +1079,9 @@ Value name_firstupdate(const Array& params, bool fHelp)
             throw runtime_error("previous transaction is not in the wallet");
         }
 
+        if (pwalletMain->IsLocked())
+            throw JSONRPCError(-13, "Error: Please enter the wallet passphrase with walletpassphrase first.");
+
         vector<unsigned char> strPubKey;
         pwalletMain->GetKeyFromPool(strPubKey, false);
         CScript scriptPubKeyOrig;
@@ -1129,6 +1135,9 @@ Value name_update(const Array& params, bool fHelp)
         throw runtime_error(
                 "name_update <name> <value> [<toaddress>]\nUpdate and possibly transfer a name\n"
                 );
+
+    if (pwalletMain->IsLocked())
+        throw JSONRPCError(-13, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
     vector<unsigned char> vchName = vchFromValue(params[0]);
     vector<unsigned char> vchValue = vchFromValue(params[1]);
@@ -1211,6 +1220,9 @@ Value name_new(const Array& params, bool fHelp)
     vchToHash.insert(vchToHash.end(), vchName.begin(), vchName.end());
     uint160 hash =  Hash160(vchToHash);
 
+    if (pwalletMain->IsLocked())
+        throw JSONRPCError(-13, "Error: Please enter the wallet passphrase with walletpassphrase first.");
+
     vector<unsigned char> strPubKey;
     pwalletMain->GetKeyFromPool(strPubKey, false);
     CScript scriptPubKeyOrig;
@@ -1271,30 +1283,34 @@ Value deletetransaction(const Array& params, bool fHelp)
                 );
 
     if (params.size() != 1)
-      throw runtime_error("missing txid");
+        throw runtime_error("missing txid");
+
     CRITICAL_BLOCK(cs_main)
     CRITICAL_BLOCK(pwalletMain->cs_wallet)
     {
-      uint256 hash;
-      hash.SetHex(params[0].get_str());
-      if (!pwalletMain->mapWallet.count(hash))
-        throw runtime_error("transaction not in wallet");
+        uint256 hash;
+        hash.SetHex(params[0].get_str());
+        if (!pwalletMain->mapWallet.count(hash))
+          throw runtime_error("transaction not in wallet");
 
-      if (!mapTransactions.count(hash))
-        throw runtime_error("transaction not in memory - is already in blockchain?");
-      CWalletTx wtx = pwalletMain->mapWallet[hash];
-      UnspendInputs(wtx);
+        if (!mapTransactions.count(hash))
+          throw runtime_error("transaction not in memory - is already in blockchain?");
+        CWalletTx wtx = pwalletMain->mapWallet[hash];
+        UnspendInputs(wtx);
 
-      // We are not removing from mapTransactions because this can cause memory corruption
-      // during mining.  The user should restart to clear the tx from memory.
-      wtx.RemoveFromMemoryPool();
-      pwalletMain->EraseFromWallet(wtx.GetHash());
-      vector<unsigned char> vchName;
-      if (GetNameOfTx(wtx, vchName) && mapNamePending.count(vchName)) {
-        printf("deletetransaction() : remove from pending");
-        mapNamePending[vchName].erase(wtx.GetHash());
-      }
-      return "success, please restart program to clear memory";
+        if (pwalletMain->IsLocked())
+            throw JSONRPCError(-13, "Error: Please enter the wallet passphrase with walletpassphrase first.");
+
+        // We are not removing from mapTransactions because this can cause memory corruption
+        // during mining.  The user should restart to clear the tx from memory.
+        wtx.RemoveFromMemoryPool();
+        pwalletMain->EraseFromWallet(wtx.GetHash());
+        vector<unsigned char> vchName;
+        if (GetNameOfTx(wtx, vchName) && mapNamePending.count(vchName)) {
+            printf("deletetransaction() : remove from pending");
+            mapNamePending[vchName].erase(wtx.GetHash());
+        }
+        return "success, please restart program to clear memory";
     }
 }
 
@@ -1312,6 +1328,9 @@ Value name_clean(const Array& params, bool fHelp)
 {
     if (fHelp || params.size())
         throw runtime_error("name_clean\nClean unsatisfiable transactions from the wallet - including name_update on an already taken name\n");
+
+    if (pwalletMain->IsLocked())
+        throw JSONRPCError(-13, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
     CRITICAL_BLOCK(cs_main)
     CRITICAL_BLOCK(pwalletMain->cs_wallet)
@@ -1409,19 +1428,19 @@ Value sendtoalias(const Array& params, bool fHelp)
     const Value& namecoin = find_value(json, "namecoin");
     if (namecoin.type() == null_type)
         throw JSONRPCError(-5, "Namecoin data should be a string or a json object");
-	
+    
     if (namecoin.type() == obj_type)
-	{
-    	const Value& ndefault = find_value(namecoin.get_obj(), "default");
-    	if (ndefault.type() == null_type)
-        	throw JSONRPCError(-5, "A namecoin object should have a 'default' address");
-		else if (ndefault.type() == str_type)
-        	address = ndefault.get_str();
-		else
-        	throw JSONRPCError(-5, "Namecoin default address should be a string");
-	} else if (namecoin.type() == str_type) {
+    {
+        const Value& ndefault = find_value(namecoin.get_obj(), "default");
+        if (ndefault.type() == null_type)
+            throw JSONRPCError(-5, "A namecoin object should have a 'default' address");
+        else if (ndefault.type() == str_type)
+            address = ndefault.get_str();
+        else
+            throw JSONRPCError(-5, "Namecoin default address should be a string");
+    } else if (namecoin.type() == str_type) {
         address = namecoin.get_str();
-	} else
+    } else
         throw JSONRPCError(-5, "Namecoin data should be a string or a json object");
     
     if (!address.IsValid())
@@ -1439,6 +1458,9 @@ Value sendtoalias(const Array& params, bool fHelp)
 
     CRITICAL_BLOCK(cs_main)
     {  
+        if (pwalletMain->IsLocked())
+            throw JSONRPCError(-13, "Error: Please enter the wallet passphrase with walletpassphrase first.");
+
         string strError = pwalletMain->SendMoneyToBitcoinAddress(address, nAmount, wtx);
         if (strError != "")
             throw JSONRPCError(-4, strError);
