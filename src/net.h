@@ -284,9 +284,10 @@ public:
         nHeaderStart = vSend.size();
         vSend << CMessageHeader(pszCommand, 0);
         nMessageStart = vSend.size();
-        if (fDebug)
+        if (fDebug) {
             printf("%s ", DateTimeStrFormat("%x %H:%M:%S", GetTime()).c_str());
-        printf("sending: %s ", pszCommand);
+            printf("sending: %s ", pszCommand);
+        }
     }
 
     void AbortMessage()
@@ -326,8 +327,10 @@ public:
             memcpy((char*)&vSend[nHeaderStart] + offsetof(CMessageHeader, nChecksum), &nChecksum, sizeof(nChecksum));
         }
 
-        printf("(%d bytes) ", nSize);
-        printf("\n");
+        if (fDebug) {
+            printf("(%d bytes) ", nSize);
+            printf("\n");
+        }
 
         nHeaderStart = -1;
         nMessageStart = -1;
