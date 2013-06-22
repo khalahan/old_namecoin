@@ -84,16 +84,6 @@ Values for names in the d/ namespace are JSON encoded.  The simplest value is of
 
 A [full specification](http://dot-bit.org/Domain_names) is in progress.
 
-The master branch is regularly built and tested, but is not guaranteed
-to be completely stable. Tags are regularly created to indicate new
-official, stable release versions of Bitcoin. If you would like to
-help test the Bitcoin core, please contact QA@BitcoinTesting.org.
-
-Feature branches are created when there are major new features being
-worked on by several people.
-
-Feature branches are created when there are major new features being worked on by several people.
-
 DNS conduits
 =============
 
