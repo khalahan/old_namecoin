@@ -111,6 +111,12 @@ obj/test/test_bitcoin.o: $(wildcard test/*.cpp) $(HEADERS)
 test_bitcoin: obj/test/test_bitcoin.o $(filter-out obj/nogui/init.o,$(OBJS:obj/%=obj/nogui/%))
 	$(CXX) $(CXXFLAGS) -o $@ $(LIBPATHS) $^ -Wl,-Bstatic -lboost_unit_test_framework $(LIBS)
 
+obj/test/test_namecoin.o: $(wildcard test/*.cpp) $(HEADERS)
+	$(CXX) -c $(CFLAGS) -o $@ test/test_namecoin.cpp
+
+test_namecoin: obj/nogui/namecoin.o obj/test/test_namecoin.o $(filter-out obj/nogui/init.o,$(BASE_OBJS:obj/%=obj/nogui/%))
+	$(CXX) $(CXXFLAGS) -o $@ $(LIBPATHS) $^ -Wl,-Bstatic -lboost_unit_test_framework $(LIBS)
+
 obj/nogui/namecoin.o: namecoin.h
 
 namecoind: $(BASE_OBJS:obj/%=obj/nogui/%) obj/nogui/namecoin.o

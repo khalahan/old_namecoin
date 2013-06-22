@@ -2,6 +2,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "../main.h"
+#include "../hook.h"
 #include "../wallet.h"
 
 #include "uint160_tests.cpp"
