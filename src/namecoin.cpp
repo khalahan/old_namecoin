@@ -411,8 +411,6 @@ bool CreateTransactionWithInputTx(const vector<pair<CScript, int64> >& vecSend, 
 string SendMoneyWithInputTx(CScript scriptPubKey, int64 nValue, int64 nNetFee, CWalletTx& wtxIn, CWalletTx& wtxNew, bool fAskFee)
 {
     int nTxOut = IndexOfNameOutput(wtxIn);
-    CReserveKey reservekey(pwalletMain);
-    int64 nFeeRequired;
     vector< pair<CScript, int64> > vecSend;
     vecSend.push_back(make_pair(scriptPubKey, nValue));
 
@@ -423,6 +421,15 @@ string SendMoneyWithInputTx(CScript scriptPubKey, int64 nValue, int64 nNetFee, C
         vecSend.push_back(make_pair(scriptFee, nNetFee));
     }
 
+    CReserveKey reservekey(pwalletMain);
+    int64 nFeeRequired;
+
+    if (pwalletMain->IsLocked())
+    {
+        string strError = _("Error: Wallet locked, unable to create transaction  ");
+        printf("SendMoney() : %s", strError.c_str());
+        return strError;
+    }
     if (!CreateTransactionWithInputTx(vecSend, wtxIn, nTxOut, wtxNew, reservekey, nFeeRequired))
     {
         string strError;
